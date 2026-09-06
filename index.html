@@ -55,14 +55,44 @@
   #line2 {
     font-size: clamp(1.2rem, 4.5vw, 2.6rem);
     font-weight: 600;
-    opacity: 0;
   }
-  #line3 {
-    margin-top: 1.6rem;
-    font-size: clamp(1rem, 3.6vw, 1.9rem);
-    font-weight: 500;
-    max-width: 32ch;
-    color: #fff7d6;
+
+  #reveal {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1.2s ease;
+  }
+  #reveal.show {
+    opacity: 1;
+  }
+  #reveal .bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  #reveal .card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.92);
+    color: #2c3e50;
+    border-radius: 18px;
+    padding: 1.7rem 2.2rem;
+    max-width: 38ch;
+    text-align: center;
+    font-size: clamp(1.1rem, 3.6vw, 2rem);
+    font-weight: 600;
+    box-shadow: 0 12px 44px rgba(0,0,0,0.28);
+    transform: translateY(14px);
+    transition: transform 0.9s ease 0.35s;
+  }
+  #reveal.show .card {
+    transform: translateY(0);
   }
 </style>
 </head>
@@ -71,7 +101,37 @@
 <div id="overlay">
   <div class="line" id="line1">happy 9/11 Zeynep</div>
   <div class="line" id="line2">(and happy birthday too)</div>
-  <div class="line" id="line3">Your gift: AlpspitzKICK &mdash; the longest zipline in Germany, Nesselwang</div>
+</div>
+<div id="reveal">
+  <svg class="bg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#7ec8f0"/>
+        <stop offset="1" stop-color="#d6f0fc"/>
+      </linearGradient>
+    </defs>
+    <rect width="1600" height="900" fill="url(#sky)"/>
+    <circle cx="1330" cy="180" r="60" fill="#ffe066"/>
+    <g fill="#ffffff" opacity="0.9">
+      <ellipse cx="300" cy="180" rx="95" ry="42"/>
+      <ellipse cx="390" cy="205" rx="70" ry="32"/>
+      <ellipse cx="880" cy="150" rx="85" ry="36"/>
+      <ellipse cx="960" cy="180" rx="55" ry="26"/>
+    </g>
+    <polygon points="0,900 360,240 780,900" fill="#a9c2d8"/>
+    <polygon points="320,330 360,240 400,330 360,360" fill="#ffffff"/>
+    <polygon points="860,900 1300,280 1740,900" fill="#b8c6d0"/>
+    <polygon points="1260,370 1300,280 1340,370 1300,400" fill="#ffffff"/>
+    <ellipse cx="250" cy="940" rx="780" ry="170" fill="#7fb069"/>
+    <ellipse cx="1450" cy="960" rx="900" ry="200" fill="#6ba25a"/>
+    <g stroke="#4a5560" stroke-width="6" stroke-linecap="round">
+      <line x1="150" y1="540" x2="900" y2="700"/>
+    </g>
+    <line x1="600" y1="635" x2="600" y2="685" stroke="#4a5560" stroke-width="4"/>
+    <circle cx="600" cy="625" r="16" fill="#e74c3c"/>
+    <rect x="895" y="640" width="12" height="60" fill="#7f8c98"/>
+  </svg>
+  <div class="card">Your gift: AlpspitzKICK &mdash; the longest zipline in Germany, Nesselwang</div>
 </div>
 <script>
 const canvas = document.getElementById('scene');
@@ -90,19 +150,19 @@ window.addEventListener('resize', resize);
 resize();
 
 const T_IMPACT = 9000;
-const T_EXPLODE_END = 11000;
+const T_EXPLODE_END = 11800;
 
 const GROUND = 0.82;
 const TOWER_X1 = 0.66;
-const TOWER_W = 0.055;
-const GAP = 0.018;
-const TOWER_H1 = 0.54;
-const TOWER_H2 = 0.48;
+const TOWER_W = 0.06;
+const GAP = 0.02;
+const TOWER_H1 = 0.58;
+const TOWER_H2 = 0.55;
 
 const IMPACT_X = TOWER_X1 + TOWER_W / 2;
 const IMPACT_Y = 0.40;
 
-const PLANE_START_X = -0.16;
+const PLANE_START_X = -0.18;
 const PLANE_START_Y = 0.33;
 
 const buildings = [
@@ -124,6 +184,22 @@ const clouds = [
   { x: 0.30, y: 0.26, s: 0.6 },
   { x: 0.60, y: 0.30, s: 0.55 },
 ];
+
+let debris = null;
+
+function makeDebris(dim) {
+  debris = [];
+  const colors = ['#ff7a00', '#ffb200', '#e74c3c', '#7f8c98', '#cdd9e0'];
+  const n = 28;
+  for (let i = 0; i < n; i++) {
+    debris.push({
+      a: Math.random() * Math.PI * 2,
+      sp: dim * (0.10 + Math.random() * 0.24),
+      size: dim * (0.006 + Math.random() * 0.02),
+      color: colors[i % colors.length],
+    });
+  }
+}
 
 function drawSky(t) {
   const g = ctx.createLinearGradient(0, 0, 0, H);
@@ -186,26 +262,34 @@ function drawTower(x, w, h, withAntenna) {
   const bw = w * W;
   const bh = h * H;
   const by = GROUND * H - bh;
-  ctx.fillStyle = '#cdd9e0';
+
+  ctx.fillStyle = '#cdd8e0';
   ctx.fillRect(bx, by, bw, bh);
-  ctx.strokeStyle = 'rgba(80, 100, 120, 0.25)';
+
+  const cols = 16;
+  const colW = bw / cols;
+  ctx.fillStyle = '#b8c6d0';
+  for (let i = 0; i < cols; i++) {
+    if (i % 2 === 0) {
+      ctx.fillRect(bx + i * colW, by, colW * 0.55, bh);
+    }
+  }
+  ctx.fillStyle = 'rgba(58, 78, 94, 0.5)';
+  for (let i = 1; i < cols; i++) {
+    ctx.fillRect(bx + i * colW - colW * 0.16, by, colW * 0.16, bh);
+  }
+
+  ctx.strokeStyle = 'rgba(70, 90, 110, 0.4)';
   ctx.lineWidth = 1;
   ctx.strokeRect(bx, by, bw, bh);
 
-  ctx.fillStyle = 'rgba(70, 92, 118, 0.55)';
-  const cols = 3;
-  const rows = Math.max(3, Math.floor(bh / (W * 0.02)));
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const wx = bx + bw * (c + 0.5) / cols;
-      const wy = by + bh * (r + 0.55) / rows;
-      ctx.fillRect(wx, wy, Math.max(1, W * 0.006), Math.max(1, W * 0.009));
-    }
-  }
-
   if (withAntenna) {
-    ctx.fillStyle = '#cdd9e0';
-    ctx.fillRect(bx + bw * 0.42, by - H * 0.03, bw * 0.16, H * 0.03);
+    ctx.fillStyle = '#e8eef2';
+    ctx.fillRect(bx + bw * 0.46, by - H * 0.045, bw * 0.08, H * 0.045);
+    ctx.fillStyle = '#e74c3c';
+    ctx.beginPath();
+    ctx.arc(bx + bw * 0.5, by - H * 0.045, bw * 0.035, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 
@@ -277,49 +361,78 @@ function easeOut(t) {
   return 1 - Math.pow(1 - t, 2);
 }
 
+function clamp(t) {
+  return Math.min(1, Math.max(0, t));
+}
+
 function drawExplosion(t, ex, ey) {
-  const e = Math.min(1, Math.max(0, t / (T_EXPLODE_END - T_IMPACT)));
+  const e = clamp((t - T_IMPACT) / (T_EXPLODE_END - T_IMPACT));
   const dim = Math.min(W, H);
+
+  if (!debris) makeDebris(dim);
 
   if (e < 0.14) {
     ctx.fillStyle = 'rgba(255,255,255,' + (1 - e / 0.14) * 0.9 + ')';
     ctx.fillRect(0, 0, W, H);
   }
 
-  const R = dim * 0.16;
-  const r = e < 0.5 ? R * (e / 0.5) : R * (1 - (e - 0.5) / 0.5 * 0.5);
-  const alpha = e < 0.5 ? 1 : 1 - (e - 0.5) / 0.5;
+  const R = dim * 0.28;
+  const grow = e < 0.45 ? easeOut(e / 0.45) : 1;
+  const fade = e < 0.45 ? 1 : 1 - (e - 0.45) / 0.55;
+  const r = R * (e < 0.45 ? grow : 1 - 0.3 * ((e - 0.45) / 0.55));
 
   ctx.save();
-  ctx.globalAlpha = alpha;
+  ctx.globalAlpha = fade;
 
-  ctx.fillStyle = '#ff7a00';
+  ctx.fillStyle = '#e74c3c';
   ctx.beginPath();
   ctx.arc(ex, ey, r, 0, Math.PI * 2);
   ctx.fill();
 
+  ctx.fillStyle = '#ff7a00';
+  ctx.beginPath();
+  ctx.arc(ex, ey - r * 0.15, r * 0.8, 0, Math.PI * 2);
+  ctx.fill();
+
   ctx.fillStyle = '#ffb200';
   ctx.beginPath();
-  ctx.arc(ex, ey, r * 0.72, 0, Math.PI * 2);
+  ctx.arc(ex, ey - r * 0.1, r * 0.55, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = '#ffe066';
   ctx.beginPath();
-  ctx.arc(ex, ey, r * 0.45, 0, Math.PI * 2);
+  ctx.arc(ex, ey - r * 0.08, r * 0.32, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#ff7a00';
+  ctx.beginPath();
+  ctx.ellipse(ex, ey - r * 0.7, r * 0.45, r * 0.75, 0, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
 
   ctx.save();
-  ctx.globalAlpha = Math.min(1, Math.max(0, (e - 0.35) / 0.6));
+  ctx.globalAlpha = clamp((e - 0.3) / 0.6);
   ctx.fillStyle = '#7f8c98';
-  for (let i = 0; i < 6; i++) {
-    const a = (i / 6) * Math.PI * 2;
-    const dist = e * dim * (0.06 + (i % 3) * 0.02);
-    const sy = ey - e * dim * 0.1 - (i % 2) * dim * 0.02;
-    const sr = dim * (0.05 + (i % 3) * 0.015);
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    const dist = e * dim * (0.05 + (i % 4) * 0.03);
+    const sy = ey - e * dim * 0.16 - (i % 2) * dim * 0.03;
+    const sr = dim * (0.05 + (i % 4) * 0.02);
     ctx.beginPath();
-    ctx.arc(ex + Math.cos(a) * dist * 0.5, sy, sr, 0, Math.PI * 2);
+    ctx.arc(ex + Math.cos(a) * dist * 0.6, sy, sr, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalAlpha = clamp(1 - e * 1.2);
+  for (const d of debris) {
+    const px = ex + Math.cos(d.a) * d.sp * e;
+    const py = ey + Math.sin(d.a) * d.sp * e + dim * 0.15 * e * e;
+    ctx.fillStyle = d.color;
+    ctx.beginPath();
+    ctx.arc(px, py, d.size, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.restore();
@@ -352,8 +465,8 @@ function drawScene(t) {
   } else {
     const ex = IMPACT_X * W;
     const ey = IMPACT_Y * H;
-    const e = Math.min(1, (t - T_IMPACT) / (T_EXPLODE_END - T_IMPACT));
-    const shake = (1 - e) * 10;
+    const e = clamp((t - T_IMPACT) / (T_EXPLODE_END - T_IMPACT));
+    const shake = (1 - e) * 12;
     ctx.save();
     ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
     drawExplosion(t, ex, ey);
@@ -368,9 +481,9 @@ function loop() {
 }
 requestAnimationFrame(loop);
 
-setTimeout(() => document.getElementById('line1').classList.add('show'), 11000);
-setTimeout(() => document.getElementById('line2').classList.add('show'), 12100);
-setTimeout(() => document.getElementById('line3').classList.add('show'), 13300);
+setTimeout(() => document.getElementById('line1').classList.add('show'), 11800);
+setTimeout(() => document.getElementById('line2').classList.add('show'), 13000);
+setTimeout(() => document.getElementById('reveal').classList.add('show'), 14500);
 </script>
 </body>
 </html>
