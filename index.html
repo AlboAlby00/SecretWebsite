@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Happy 9/11 Zeynep</title>
+<title>Happy 9/11 Zeynep!</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
@@ -62,7 +62,7 @@
     inset: 0;
     z-index: 20;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
     opacity: 0;
     pointer-events: none;
@@ -79,6 +79,7 @@
   }
   #reveal .card {
     position: relative;
+    margin-bottom: 7vh;
     background: rgba(255, 255, 255, 0.92);
     color: #2c3e50;
     border-radius: 18px;
@@ -99,7 +100,7 @@
 <body>
 <canvas id="scene"></canvas>
 <div id="overlay">
-  <div class="line" id="line1">happy 9/11 Zeynep</div>
+  <div class="line" id="line1">happy 9/11 Zeynep!</div>
   <div class="line" id="line2">(and happy birthday too)</div>
 </div>
 <div id="reveal">
@@ -111,25 +112,50 @@
       </linearGradient>
     </defs>
     <rect width="1600" height="900" fill="url(#sky)"/>
-    <circle cx="1330" cy="180" r="60" fill="#ffe066"/>
+    <circle cx="1360" cy="180" r="58" fill="#ffe066"/>
+    <circle cx="1360" cy="180" r="44" fill="#fff3b0"/>
     <g fill="#ffffff" opacity="0.9">
-      <ellipse cx="300" cy="180" rx="95" ry="42"/>
-      <ellipse cx="390" cy="205" rx="70" ry="32"/>
-      <ellipse cx="880" cy="150" rx="85" ry="36"/>
-      <ellipse cx="960" cy="180" rx="55" ry="26"/>
+      <ellipse cx="260" cy="170" rx="95" ry="42"/>
+      <ellipse cx="360" cy="198" rx="70" ry="32"/>
+      <ellipse cx="960" cy="150" rx="85" ry="36"/>
+      <ellipse cx="1050" cy="178" rx="55" ry="26"/>
     </g>
-    <polygon points="0,900 360,240 780,900" fill="#a9c2d8"/>
-    <polygon points="320,330 360,240 400,330 360,360" fill="#ffffff"/>
-    <polygon points="860,900 1300,280 1740,900" fill="#b8c6d0"/>
-    <polygon points="1260,370 1300,280 1340,370 1300,400" fill="#ffffff"/>
-    <ellipse cx="250" cy="940" rx="780" ry="170" fill="#7fb069"/>
-    <ellipse cx="1450" cy="960" rx="900" ry="200" fill="#6ba25a"/>
-    <g stroke="#4a5560" stroke-width="6" stroke-linecap="round">
-      <line x1="150" y1="540" x2="900" y2="700"/>
+
+    <polygon points="0,900 300,260 640,900" fill="#a9c2d8"/>
+    <polygon points="265,330 300,260 335,330 300,355" fill="#ffffff"/>
+    <polygon points="940,900 1250,300 1740,900" fill="#b8c6d0"/>
+    <polygon points="1225,370 1250,300 1275,370 1250,400" fill="#ffffff"/>
+
+    <ellipse cx="250" cy="950" rx="720" ry="165" fill="#7fb069"/>
+    <ellipse cx="1400" cy="970" rx="820" ry="195" fill="#6ba25a"/>
+    <ellipse cx="880" cy="1000" rx="900" ry="175" fill="#8ec46f"/>
+
+    <g stroke="#4a5560" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="345" y1="300" x2="345" y2="455"/>
+      <line x1="328" y1="455" x2="345" y2="340"/>
+      <line x1="362" y1="455" x2="345" y2="340"/>
+      <line x1="338" y1="340" x2="358" y2="340"/>
+      <line x1="345" y1="340" x2="820" y2="600"/>
+      <line x1="820" y1="600" x2="820" y2="652"/>
+      <line x1="806" y1="652" x2="834" y2="652"/>
     </g>
-    <line x1="600" y1="635" x2="600" y2="685" stroke="#4a5560" stroke-width="4"/>
-    <circle cx="600" cy="625" r="16" fill="#e74c3c"/>
-    <rect x="895" y="640" width="12" height="60" fill="#7f8c98"/>
+    <line x1="345" y1="343" x2="820" y2="603" stroke="#8fa6b8" stroke-width="3" stroke-linecap="round"/>
+
+    <g stroke="#b8c6d0" stroke-width="5" stroke-linecap="round">
+      <line x1="516" y1="466" x2="560" y2="466"/>
+      <line x1="508" y1="486" x2="556" y2="486"/>
+      <line x1="524" y1="506" x2="566" y2="506"/>
+    </g>
+
+    <rect x="596" y="480" width="16" height="7" rx="3" fill="#3b4a56"/>
+    <circle cx="604" cy="466" r="9" fill="#e74c3c"/>
+    <g stroke="#3b4a56" stroke-width="5" stroke-linecap="round">
+      <line x1="604" y1="475" x2="604" y2="500"/>
+      <line x1="600" y1="482" x2="598" y2="476"/>
+      <line x1="608" y1="482" x2="610" y2="476"/>
+      <line x1="604" y1="500" x2="596" y2="514"/>
+      <line x1="604" y1="500" x2="611" y2="513"/>
+    </g>
   </svg>
   <div class="card">Your gift: AlpspitzKICK &mdash; the longest zipline in Germany, Nesselwang</div>
 </div>
@@ -481,9 +507,9 @@ function loop() {
 }
 requestAnimationFrame(loop);
 
-setTimeout(() => document.getElementById('line1').classList.add('show'), 11800);
-setTimeout(() => document.getElementById('line2').classList.add('show'), 13000);
-setTimeout(() => document.getElementById('reveal').classList.add('show'), 14500);
+setTimeout(() => document.getElementById('line1').classList.add('show'), 13200);
+setTimeout(() => document.getElementById('line2').classList.add('show'), 15400);
+setTimeout(() => document.getElementById('reveal').classList.add('show'), 18400);
 </script>
 </body>
 </html>
