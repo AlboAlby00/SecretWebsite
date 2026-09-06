@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy 9/11 Zeynep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #8ed3f4;
+    font-family: "Fredoka", "Comic Sans MS", "Trebuchet MS", sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: default;
+  }
+  canvas {
+    position: fixed;
+    inset: 0;
+    display: block;
+  }
+  #overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    text-align: center;
+    padding: 1rem;
+    pointer-events: none;
+  }
+  .line {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.9s ease, transform 0.9s ease;
+    color: #ffffff;
+    text-shadow: 0 3px 0 rgba(0,0,0,0.18), 0 0 24px rgba(0,0,0,0.35);
+  }
+  .line.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  #line1 {
+    font-size: clamp(2.6rem, 9vw, 5.5rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  #line2 {
+    font-size: clamp(1.2rem, 4.5vw, 2.6rem);
+    font-weight: 600;
+    opacity: 0;
+  }
+  #line3 {
+    margin-top: 1.6rem;
+    font-size: clamp(1rem, 3.6vw, 1.9rem);
+    font-weight: 500;
+    max-width: 32ch;
+    color: #fff7d6;
+  }
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div id="overlay">
+  <div class="line" id="line1">happy 9/11 Zeynep</div>
+  <div class="line" id="line2">(and happy birthday too)</div>
+  <div class="line" id="line3">Your gift: AlpspitzKICK &mdash; the longest zipline in Germany, Nesselwang</div>
+</div>
+<script>
+const canvas = document.getElementById('scene');
+const ctx = canvas.getContext('2d');
+
+let W = window.innerWidth;
+let H = window.innerHeight;
+
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W;
+  canvas.height = H;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const T_IMPACT = 9000;
+const T_EXPLODE_END = 11000;
+
+const GROUND = 0.82;
+const TOWER_X1 = 0.66;
+const TOWER_W = 0.055;
+const GAP = 0.018;
+const TOWER_H1 = 0.54;
+const TOWER_H2 = 0.48;
+
+const IMPACT_X = TOWER_X1 + TOWER_W / 2;
+const IMPACT_Y = 0.40;
+
+const PLANE_START_X = -0.16;
+const PLANE_START_Y = 0.33;
+
+const buildings = [
+  { x: 0.000, w: 0.10, h: 0.16, c: '#b6c2cc' },
+  { x: 0.088, w: 0.07, h: 0.23, c: '#aab7c2' },
+  { x: 0.158, w: 0.09, h: 0.12, c: '#b6c2cc' },
+  { x: 0.244, w: 0.07, h: 0.18, c: '#aab7c2' },
+  { x: 0.312, w: 0.08, h: 0.14, c: '#b6c2cc' },
+  { x: 0.392, w: 0.07, h: 0.21, c: '#aab7c2' },
+  { x: 0.460, w: 0.08, h: 0.13, c: '#b6c2cc' },
+  { x: 0.540, w: 0.07, h: 0.17, c: '#aab7c2' },
+  { x: 0.850, w: 0.15, h: 0.11, c: '#b6c2cc' },
+];
+
+const clouds = [
+  { x: 0.15, y: 0.14, s: 1.0 },
+  { x: 0.45, y: 0.08, s: 0.7 },
+  { x: 0.78, y: 0.18, s: 0.9 },
+  { x: 0.30, y: 0.26, s: 0.6 },
+  { x: 0.60, y: 0.30, s: 0.55 },
+];
+
+function drawSky(t) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#7ec8f0');
+  g.addColorStop(1, '#cdeefc');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+}
+
+function drawSun() {
+  ctx.save();
+  const x = W * 0.12;
+  const y = H * 0.14;
+  ctx.fillStyle = '#ffe066';
+  ctx.beginPath();
+  ctx.arc(x, y, Math.min(W, H) * 0.06, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff3b0';
+  ctx.beginPath();
+  ctx.arc(x, y, Math.min(W, H) * 0.045, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawCloud(cx, cy, s) {
+  ctx.save();
+  ctx.fillStyle = '#ffffff';
+  ctx.globalAlpha = 0.9;
+  const r = Math.min(W, H) * 0.035 * s;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.arc(cx + r, cy - r * 0.4, r * 0.8, 0, Math.PI * 2);
+  ctx.arc(cx + r * 1.7, cy, r * 0.75, 0, Math.PI * 2);
+  ctx.arc(cx + r * 0.8, cy + r * 0.3, r * 0.7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawBuilding(x, w, h, color) {
+  const bx = x * W;
+  const bw = w * W;
+  const bh = h * H;
+  const by = GROUND * H - bh;
+  ctx.fillStyle = color;
+  ctx.fillRect(bx, by, bw, bh);
+  ctx.fillStyle = 'rgba(70, 90, 110, 0.35)';
+  const cols = Math.max(1, Math.floor(bw / (W * 0.018)));
+  const rows = Math.max(1, Math.floor(bh / (W * 0.024)));
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const wx = bx + bw * (c + 0.5) / cols;
+      const wy = by + bh * (r + 0.55) / rows;
+      ctx.fillRect(wx, wy, Math.max(1, W * 0.0035), Math.max(1, W * 0.006));
+    }
+  }
+}
+
+function drawTower(x, w, h, withAntenna) {
+  const bx = x * W;
+  const bw = w * W;
+  const bh = h * H;
+  const by = GROUND * H - bh;
+  ctx.fillStyle = '#cdd9e0';
+  ctx.fillRect(bx, by, bw, bh);
+  ctx.strokeStyle = 'rgba(80, 100, 120, 0.25)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(bx, by, bw, bh);
+
+  ctx.fillStyle = 'rgba(70, 92, 118, 0.55)';
+  const cols = 3;
+  const rows = Math.max(3, Math.floor(bh / (W * 0.02)));
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const wx = bx + bw * (c + 0.5) / cols;
+      const wy = by + bh * (r + 0.55) / rows;
+      ctx.fillRect(wx, wy, Math.max(1, W * 0.006), Math.max(1, W * 0.009));
+    }
+  }
+
+  if (withAntenna) {
+    ctx.fillStyle = '#cdd9e0';
+    ctx.fillRect(bx + bw * 0.42, by - H * 0.03, bw * 0.16, H * 0.03);
+  }
+}
+
+function drawPlane(x, y, s) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(s, s);
+
+  ctx.fillStyle = '#b9c6d0';
+  ctx.beginPath();
+  ctx.moveTo(-0.08, -0.02);
+  ctx.lineTo(-0.28, -0.5);
+  ctx.lineTo(0.06, -0.5);
+  ctx.lineTo(0.14, -0.02);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-0.08, 0.02);
+  ctx.lineTo(-0.28, 0.5);
+  ctx.lineTo(0.06, 0.5);
+  ctx.lineTo(0.14, 0.02);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#e74c3c';
+  ctx.beginPath();
+  ctx.moveTo(-0.42, -0.04);
+  ctx.lineTo(-0.5, -0.38);
+  ctx.lineTo(-0.32, -0.04);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#b9c6d0';
+  ctx.beginPath();
+  ctx.moveTo(-0.4, 0.0);
+  ctx.lineTo(-0.52, 0.16);
+  ctx.lineTo(-0.3, 0.16);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#f4f6f8';
+  ctx.strokeStyle = 'rgba(90, 110, 130, 0.5)';
+  ctx.lineWidth = 0.02;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 0.5, 0.15, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#c9d4dd';
+  ctx.beginPath();
+  ctx.ellipse(0.46, 0, 0.08, 0.11, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#5b7280';
+  for (let i = -0.32; i <= 0.3; i += 0.1) {
+    ctx.beginPath();
+    ctx.arc(i, -0.02, 0.032, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function easeOut(t) {
+  return 1 - Math.pow(1 - t, 2);
+}
+
+function drawExplosion(t, ex, ey) {
+  const e = Math.min(1, Math.max(0, t / (T_EXPLODE_END - T_IMPACT)));
+  const dim = Math.min(W, H);
+
+  if (e < 0.14) {
+    ctx.fillStyle = 'rgba(255,255,255,' + (1 - e / 0.14) * 0.9 + ')';
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  const R = dim * 0.16;
+  const r = e < 0.5 ? R * (e / 0.5) : R * (1 - (e - 0.5) / 0.5 * 0.5);
+  const alpha = e < 0.5 ? 1 : 1 - (e - 0.5) / 0.5;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  ctx.fillStyle = '#ff7a00';
+  ctx.beginPath();
+  ctx.arc(ex, ey, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#ffb200';
+  ctx.beginPath();
+  ctx.arc(ex, ey, r * 0.72, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#ffe066';
+  ctx.beginPath();
+  ctx.arc(ex, ey, r * 0.45, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, Math.max(0, (e - 0.35) / 0.6));
+  ctx.fillStyle = '#7f8c98';
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    const dist = e * dim * (0.06 + (i % 3) * 0.02);
+    const sy = ey - e * dim * 0.1 - (i % 2) * dim * 0.02;
+    const sr = dim * (0.05 + (i % 3) * 0.015);
+    ctx.beginPath();
+    ctx.arc(ex + Math.cos(a) * dist * 0.5, sy, sr, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawScene(t) {
+  drawSky(t);
+
+  drawSun();
+
+  for (let i = 0; i < clouds.length; i++) {
+    const c = clouds[i];
+    const cx = ((c.x + (t * 0.000004 * (1 + i % 2))) % 1.2 - 0.1) * W;
+    drawCloud(cx, c.y * H, c.s);
+  }
+
+  for (const b of buildings) {
+    drawBuilding(b.x, b.w, b.h, b.c);
+  }
+
+  drawTower(TOWER_X1 + GAP, TOWER_W, TOWER_H2, false);
+  drawTower(TOWER_X1, TOWER_W, TOWER_H1, true);
+
+  if (t < T_IMPACT) {
+    const p = Math.min(1, t / T_IMPACT);
+    const px = lerp(PLANE_START_X, IMPACT_X, p);
+    const py = lerp(PLANE_START_Y, IMPACT_Y, p);
+    const s = Math.min(W, H) * 0.16;
+    drawPlane(px * W, py * H, s);
+  } else {
+    const ex = IMPACT_X * W;
+    const ey = IMPACT_Y * H;
+    const e = Math.min(1, (t - T_IMPACT) / (T_EXPLODE_END - T_IMPACT));
+    const shake = (1 - e) * 10;
+    ctx.save();
+    ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+    drawExplosion(t, ex, ey);
+    ctx.restore();
+  }
+}
+
+function loop() {
+  const t = performance.now();
+  drawScene(t);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+setTimeout(() => document.getElementById('line1').classList.add('show'), 11000);
+setTimeout(() => document.getElementById('line2').classList.add('show'), 12100);
+setTimeout(() => document.getElementById('line3').classList.add('show'), 13300);
+</script>
+</body>
+</html>
